@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  rion-leads:
+    build: .
+    container_name: rion-leads-tool
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./exports:/app/exports
+    restart: unless-stopped
+    environment:
+      - PORT=8000

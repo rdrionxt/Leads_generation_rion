@@ -281,11 +281,28 @@ async def root():
     return {"message": "RION LEADS generation tool API active. Dashboard loading..."}
 
 
+@app.get("/style.css")
+async def get_root_style():
+    style_file = os.path.join(static_dir, "style.css")
+    if os.path.exists(style_file):
+        return FileResponse(style_file, media_type="text/css")
+    raise HTTPException(status_code=404, detail="style.css not found")
+
+
+@app.get("/app.js")
+async def get_root_script():
+    js_file = os.path.join(static_dir, "app.js")
+    if os.path.exists(js_file):
+        return FileResponse(js_file, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="app.js not found")
+
+
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.environ.get("PORT", 8000))
     print("\n" + "=" * 65)
     print("  🚀 RION LEADS GENERATION TOOL SERVER")
-    print("  Dashboard URL: http://localhost:8000")
+    print(f"  Dashboard URL: http://localhost:{port}")
     print(f"  Default Exports: {EXPORTS_DEFAULT_DIR}")
     print("=" * 65 + "\n")
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)

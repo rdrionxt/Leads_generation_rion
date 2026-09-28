@@ -97,83 +97,286 @@ const elements = {
   leadModalOverlay: document.getElementById('leadModalOverlay'),
   modalCompanyName: document.getElementById('modalCompanyName'),
   modalBodyContent: document.getElementById('modalBodyContent'),
-  modalCloseBtn: document.getElementById('modalCloseBtn')
+  modalCloseBtn: document.getElementById('modalCloseBtn'),
+
+  // Backend Engine Config Modal
+  btnServerConfig: document.getElementById('btnServerConfig'),
+  serverUrlLabel: document.getElementById('serverUrlLabel'),
+  serverModalOverlay: document.getElementById('serverModalOverlay'),
+  serverModalCloseBtn: document.getElementById('serverModalCloseBtn'),
+  serverModalCancelBtn: document.getElementById('serverModalCancelBtn'),
+  inputBackendUrl: document.getElementById('inputBackendUrl'),
+  btnPresetLocal: document.getElementById('btnPresetLocal'),
+  btnPresetCurrent: document.getElementById('btnPresetCurrent'),
+  btnSaveBackendUrl: document.getElementById('btnSaveBackendUrl')
 };
+
+/* ==========================================================================
+   BACKEND ENGINE CONFIGURATION & DEMO STATE
+   ========================================================================== */
+let API_BASE = (function() {
+  const saved = localStorage.getItem('rion_backend_url');
+  if (saved !== null) return saved.trim().replace(/\/$/, '');
+  // Default to localhost if hosted on GitHub Pages or file:
+  if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+    return 'http://localhost:8000';
+  }
+  return '';
+})();
+
+function getApiUrl(path) {
+  if (!API_BASE) return path;
+  return `${API_BASE}${path}`;
+}
+
+const DEMO_LEADS = [
+  {
+    company_name: "Emsys Electronics Pvt Ltd",
+    category: "Electronics Manufacturer",
+    phone: "080 4953 7848",
+    email: "info@cresonix.com",
+    website: "http://www.cresonix.com/",
+    address: "#39/52, 8th Cross, Govardhan Gardens, Dr H Anjaneyappa Industrial Estate, Off Kanakapura Main Rd",
+    rating: 4.7,
+    reviews: 42,
+    google_maps_url: "https://www.google.com/maps/search/Emsys+Electronics+Pvt+Ltd+Bangalore"
+  },
+  {
+    company_name: "Sparr Electronics Limited",
+    category: "Electronics Manufacturer",
+    phone: "099004 77055",
+    email: "info@sparrl.com, sales@sparrl.com",
+    website: "https://www.sparrl.com/",
+    address: "414A, 7th Main Rd, Bangalore",
+    rating: 4.1,
+    reviews: 89,
+    google_maps_url: "https://www.google.com/maps/search/Sparr+Electronics+Limited+Bangalore"
+  },
+  {
+    company_name: "Electronics & Controls Power Systems Private Limited",
+    category: "Electronics Manufacturer",
+    phone: "080 2837 1974",
+    email: "sales@eandcpower.com",
+    website: "http://www.eandcpower.com/",
+    address: "29-A, Peenya Industrial Area, Bangalore",
+    rating: 4.9,
+    reviews: 312,
+    google_maps_url: "https://www.google.com/maps/search/Electronics+Controls+Power+Systems+Bangalore"
+  },
+  {
+    company_name: "Raytech Electronics",
+    category: "Electronics Manufacturer",
+    phone: "098454 62488",
+    email: "info@raytech-electronics.com",
+    website: "http://www.raytech-electronics.com/",
+    address: "1st Floor, S Lane, 3rd Cross Road, Bangalore",
+    rating: 4.3,
+    reviews: 13,
+    google_maps_url: "https://www.google.com/maps/search/Raytech+Electronics+Bangalore"
+  },
+  {
+    company_name: "PODRAIN ELECTRONICS PVT LTD",
+    category: "Manufacturer",
+    phone: "074110 01030",
+    email: "contact@podrain.com",
+    website: "https://podrain.com/",
+    address: "35, 1st Main Rd, Bangalore",
+    rating: 4.1,
+    reviews: 115,
+    google_maps_url: "https://www.google.com/maps/search/PODRAIN+ELECTRONICS+PVT+LTD+Bangalore"
+  },
+  {
+    company_name: "MEDASUS HEALTHCARE PVT LTD",
+    category: "Medical equipment supplier",
+    phone: "080 2341 5566",
+    email: "info@medasus.com",
+    website: "https://medasus.com",
+    address: "No.694, 4th floor, GMR Plaza, 7th main, CBI Main Rd, Bangalore",
+    rating: 5.0,
+    reviews: 28,
+    google_maps_url: "https://www.google.com/maps/search/MEDASUS+HEALTHCARE+PVT+LTD+Bangalore"
+  }
+];
+
+function updateServerBadgeUI(connected = false) {
+  if (!elements.serverUrlLabel) return;
+  if (!API_BASE) {
+    elements.serverUrlLabel.textContent = 'Backend: Same Host';
+    if (elements.btnServerConfig) elements.btnServerConfig.classList.add('connected');
+  } else {
+    try {
+      const u = new URL(API_BASE);
+      elements.serverUrlLabel.textContent = `Backend: ${u.host}`;
+    } catch (e) {
+      elements.serverUrlLabel.textContent = `Backend: ${API_BASE}`;
+    }
+    if (elements.btnServerConfig) {
+      elements.btnServerConfig.classList.toggle('connected', connected);
+    }
+  }
+}
 
 /* ==========================================================================
    INITIALIZATION
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  updateServerBadgeUI(false);
   initEventListeners();
+  initServerConfigEvents();
   initWebSocket();
   fetchArchiveFiles();
+
+  // If on GitHub Pages or demo, load sample preview leads if backend not connected yet
+  setTimeout(() => {
+    if (state.leads.length === 0) {
+      state.leads = [...DEMO_LEADS];
+      renderLeads();
+      updateStatsUI({
+        total_found: DEMO_LEADS.length,
+        emails_found: DEMO_LEADS.filter(l => l.email).length,
+        phones_found: DEMO_LEADS.filter(l => l.phone).length,
+        websites_found: DEMO_LEADS.filter(l => l.website).length,
+        status: 'idle',
+        progress_percent: 100,
+        current_action: 'Demo Preview Loaded'
+      });
+    }
+  }, 1200);
 });
+
+function initServerConfigEvents() {
+  if (!elements.btnServerConfig) return;
+
+  elements.btnServerConfig.addEventListener('click', () => {
+    elements.inputBackendUrl.value = API_BASE || window.location.origin;
+    elements.serverModalOverlay.classList.add('show');
+  });
+
+  const closeServerModal = () => elements.serverModalOverlay.classList.remove('show');
+  if (elements.serverModalCloseBtn) elements.serverModalCloseBtn.addEventListener('click', closeServerModal);
+  if (elements.serverModalCancelBtn) elements.serverModalCancelBtn.addEventListener('click', closeServerModal);
+  if (elements.serverModalOverlay) {
+    elements.serverModalOverlay.addEventListener('click', (e) => {
+      if (e.target === elements.serverModalOverlay) closeServerModal();
+    });
+  }
+
+  if (elements.btnPresetLocal) {
+    elements.btnPresetLocal.addEventListener('click', () => {
+      elements.inputBackendUrl.value = 'http://localhost:8000';
+    });
+  }
+
+  if (elements.btnPresetCurrent) {
+    elements.btnPresetCurrent.addEventListener('click', () => {
+      elements.inputBackendUrl.value = window.location.origin;
+    });
+  }
+
+  if (elements.btnSaveBackendUrl) {
+    elements.btnSaveBackendUrl.addEventListener('click', () => {
+      const val = elements.inputBackendUrl.value.trim().replace(/\/$/, '');
+      if (val === window.location.origin) {
+        API_BASE = '';
+        localStorage.removeItem('rion_backend_url');
+      } else {
+        API_BASE = val;
+        localStorage.setItem('rion_backend_url', val);
+      }
+      updateServerBadgeUI(false);
+      closeServerModal();
+      showToast(`Updated backend to: ${API_BASE || 'Same Host'}. Reconnecting...`, 'info');
+      initWebSocket();
+      fetchArchiveFiles();
+    });
+  }
+}
 
 /* ==========================================================================
    WEBSOCKET REAL-TIME SYNC
    ========================================================================== */
 function initWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  let wsUrl;
+  if (API_BASE) {
+    const isHttps = API_BASE.startsWith('https:');
+    const cleanHost = API_BASE.replace(/^https?:\/\//, '');
+    wsUrl = `${isHttps ? 'wss:' : 'ws:'}//${cleanHost}/ws`;
+  } else {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    wsUrl = `${protocol}//${window.location.host}/ws`;
+  }
 
-  state.ws = new WebSocket(wsUrl);
-
-  state.ws.onopen = () => {
-    console.log('[RION WS] Connected to backend');
-    state.reconnectAttempts = 0;
-  };
-
-  state.ws.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      handleWsMessage(msg);
-    } catch (e) {
-      console.error('[RION WS] Parse error:', e);
+  try {
+    if (state.ws) {
+      try { state.ws.close(); } catch (e) {}
     }
-  };
 
-  state.ws.onclose = () => {
-    console.warn('[RION WS] Connection closed. Attempting reconnect in 2s...');
-    setTimeout(() => {
-      if (state.reconnectAttempts < 50) {
-        state.reconnectAttempts++;
-        initWebSocket();
+    state.ws = new WebSocket(wsUrl);
+
+    state.ws.onopen = () => {
+      console.log('[RION WS] Connected to backend:', wsUrl);
+      state.reconnectAttempts = 0;
+      updateServerBadgeUI(true);
+    };
+
+    state.ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        handleWsMessage(msg);
+      } catch (e) {
+        console.error('[RION WS] Parse error:', e);
       }
-    }, 2000);
-  };
+    };
 
-  // Resilient Polling Fallback (Polls every 2 seconds to ensure sync)
-  setInterval(async () => {
-    try {
-      const res = await fetch('/api/status');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.is_running !== state.isRunning) {
-          setRunningState(data.is_running);
+    state.ws.onclose = () => {
+      updateServerBadgeUI(false);
+      setTimeout(() => {
+        if (state.reconnectAttempts < 30) {
+          state.reconnectAttempts++;
+          initWebSocket();
         }
-        if (data.stats) {
-          updateStatsUI(data.stats);
-        }
-        // If lead count changed, fetch leads
-        if (data.lead_count !== state.leads.length) {
-          const lRes = await fetch('/api/leads');
-          if (lRes.ok) {
-            const lData = await lRes.json();
-            if (lData.leads) {
-              state.leads = lData.leads;
-              renderLeads();
+      }, 3000);
+    };
+
+    state.ws.onerror = (err) => {
+      updateServerBadgeUI(false);
+    };
+  } catch (err) {
+    updateServerBadgeUI(false);
+  }
+
+  // Resilient Polling Fallback (Polls every 2.5 seconds to ensure sync)
+  if (!window._rionPollingStarted) {
+    window._rionPollingStarted = true;
+    setInterval(async () => {
+      try {
+        const res = await fetch(getApiUrl('/api/status'));
+        if (res.ok) {
+          updateServerBadgeUI(true);
+          const data = await res.json();
+          if (data.is_running !== state.isRunning) {
+            setRunningState(data.is_running);
+          }
+          if (data.stats) {
+            updateStatsUI(data.stats);
+          }
+          // If lead count changed, fetch leads
+          if (data.lead_count !== state.leads.length) {
+            const lRes = await fetch(getApiUrl('/api/leads'));
+            if (lRes.ok) {
+              const lData = await lRes.json();
+              if (lData.leads) {
+                state.leads = lData.leads;
+                renderLeads();
+              }
             }
           }
         }
+      } catch (e) {
+        // Offline or backend not active yet
       }
-    } catch (e) {
-      // Offline or network error
-    }
-  }, 2000);
-
-  state.ws.onerror = (err) => {
-    console.error('[RION WS] Error:', err);
-  };
+    }, 2500);
+  }
 }
 
 function handleWsMessage(msg) {
@@ -298,7 +501,7 @@ function initEventListeners() {
   const openFolderHandler = async () => {
     const dir = elements.inputOutputDir.value || state.defaultDir;
     try {
-      const res = await fetch('/api/open-folder', {
+      const res = await fetch(getApiUrl('/api/open-folder'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ directory: dir })
@@ -433,7 +636,7 @@ async function handleStartScraper() {
   setRunningState(true);
 
   try {
-    const res = await fetch('/api/start', {
+    const res = await fetch(getApiUrl('/api/start'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -463,7 +666,7 @@ async function handleStopScraper() {
   try {
     elements.stopScrapeBtn.disabled = true;
     elements.stopScrapeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Stopping...';
-    const res = await fetch('/api/stop', { method: 'POST' });
+    const res = await fetch(getApiUrl('/api/stop'), { method: 'POST' });
     const data = await res.json();
     showToast(data.message || 'Stop request sent.', 'info');
   } catch (e) {
@@ -712,7 +915,7 @@ function appendLogLine(timestamp, level, message) {
 async function fetchArchiveFiles() {
   const dir = elements.inputOutputDir.value || state.defaultDir;
   try {
-    const url = `/api/exports${dir ? '?dir_path=' + encodeURIComponent(dir) : ''}`;
+    const url = getApiUrl(`/api/exports${dir ? '?dir_path=' + encodeURIComponent(dir) : ''}`);
     const res = await fetch(url);
     const data = await res.json();
     renderArchiveTable(data.exports || []);
@@ -734,6 +937,7 @@ function renderArchiveTable(files) {
   files.forEach(f => {
     const tr = document.createElement('tr');
     const badgeClass = f.format === 'Excel' ? 'badge-excel' : 'badge-csv';
+    const downloadUrl = `${getApiUrl('/api/download')}?filepath=${encodeURIComponent(f.filepath)}`;
 
     tr.innerHTML = `
       <td class="archive-filename">
@@ -744,7 +948,7 @@ function renderArchiveTable(files) {
       <td style="font-family:var(--font-mono);font-size:0.8rem;">${f.size_display}</td>
       <td style="color:var(--text-muted);font-size:0.8rem;">${f.modified}</td>
       <td>
-        <a href="/api/download?filepath=${encodeURIComponent(f.filepath)}" class="btn-action" style="display:inline-flex;padding:5px 10px;font-size:0.75rem;" download>
+        <a href="${downloadUrl}" class="btn-action" style="display:inline-flex;padding:5px 10px;font-size:0.75rem;" download>
           <i class="fa-solid fa-download"></i> Download
         </a>
       </td>
