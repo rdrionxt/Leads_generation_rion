@@ -657,7 +657,15 @@ async function handleStartScraper() {
 
     showToast(`🚀 RION Engine launched! Searching for '${keywords}' in '${region}'...`, 'success');
   } catch (err) {
-    showToast('Network error while starting scraper.', 'error');
+    console.error('[RION Error]', err);
+    if (window.location.protocol === 'https:' && (!API_BASE || API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1'))) {
+      showToast('⚠️ Browser blocked connection to localhost from HTTPS. To run scraping, open the app directly at http://localhost:8000 or deploy the backend to Render.', 'error');
+      if (elements.serverModalOverlay) {
+        setTimeout(() => elements.serverModalOverlay.classList.add('show'), 800);
+      }
+    } else {
+      showToast('⚠️ Backend engine is not running. Please start "start_rion_leads.bat" or run "python app.py" on port 8000.', 'error');
+    }
     setRunningState(false);
   }
 }
