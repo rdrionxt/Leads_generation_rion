@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RION LEADS - AI-Powered Business Lead Generation & Extraction Tool</title>
+  <meta name="description" content="RION LEADS Generation Tool - Extract high-intent B2B company leads, phone numbers, verified emails, websites and locations directly from Google Maps." />
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="dark-theme">
+  <!-- Background Ambient Glows -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-container">
+        <div class="brand-icon-wrap">
+          <i class="fa-solid fa-bolt-lightning brand-icon"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">RION <span class="accent-text">LEADS</span></div>
+          <div class="brand-tagline">Autonomous B2B Intelligence & Map Extractor</div>
+        </div>
+      </div>
+      <span class="version-badge">v1.2 PRO</span>
+    </div>
+
+    <!-- Live Status & Nav Tabs -->
+    <div class="header-center">
+      <div class="engine-status-pill" id="engineStatusPill">
+        <span class="status-indicator-dot" id="statusDot"></span>
+        <span class="status-indicator-text" id="statusText">System Ready</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <nav class="nav-links">
+        <button class="nav-btn active" data-tab="tab-dashboard" id="navDashboardBtn">
+          <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </button>
+        <button class="nav-btn" data-tab="tab-history" id="navHistoryBtn">
+          <i class="fa-solid fa-folder-open"></i> Export Archive
+        </button>
+        <button class="nav-btn" data-tab="tab-terminal" id="navTerminalBtn">
+          <i class="fa-solid fa-terminal"></i> Live Logs <span class="badge-counter" id="logCounterBadge">0</span>
+        </button>
+      </nav>
+      <button class="action-icon-btn" id="openDefaultDirBtn" title="Open Export Directory in Windows Explorer">
+        <i class="fa-regular fa-folder"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="dashboard-main">
+    
+    <!-- LEFT SIDEBAR: INPUT CONTROL DECK -->
+    <aside class="control-panel glass-card">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <i class="fa-solid fa-sliders panel-icon"></i>
+          <h2>Lead Generation Parameters</h2>
+        </div>
+        <button class="btn-ghost-sm" id="resetFormBtn" title="Reset all input parameters">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+
+      <form id="leadScraperForm" class="scraper-form" onsubmit="return false;">
+        <!-- Input 1: Keywords / Niche -->
+        <div class="form-group">
+          <label for="inputKeywords" class="form-label">
+            <span><i class="fa-solid fa-tags label-icon"></i> Company Keywords / Industry</span>
+            <span class="label-hint">Required</span>
+          </label>
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              id="inputKeywords" 
+              class="form-input" 
+              placeholder="e.g. electronics, product manufacturing" 
+              value="electronics, product manufacturing"
+              required 
+            />
+            <button type="button" class="input-clear-btn" onclick="document.getElementById('inputKeywords').value='';">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <!-- Quick Presets -->
+          <div class="quick-chips">
+            <span class="chip-label">Quick:</span>
+            <button type="button" class="chip" data-kw="electronics, product manufacturing">Electronics</button>
+            <button type="button" class="chip" data-kw="solar panel manufacturers">Solar Power</button>
+            <button type="button" class="chip" data-kw="medical equipment suppliers">Medical</button>
+            <button type="button" class="chip" data-kw="IT software development">Software</button>
+          </div>
+        </div>
+
+        <!-- Input 2: Target Area or Region -->
+        <div class="form-group">
+          <label for="inputRegion" class="form-label">
+            <span><i class="fa-solid fa-location-dot label-icon"></i> Area / Region / City</span>
+            <span class="label-hint">Required</span>
+          </label>
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              id="inputRegion" 
+              class="form-input" 
+              placeholder="e.g. Bangalore, India or Texas, USA" 
+              value="Bangalore"
+              required 
+            />
+            <button type="button" class="input-clear-btn" onclick="document.getElementById('inputRegion').value='';">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <!-- Quick Region Chips -->
+          <div class="quick-chips">
+            <span class="chip-label">Popular:</span>
+            <button type="button" class="region-chip" data-reg="Bangalore">Bangalore</button>
+            <button type="button" class="region-chip" data-reg="Mumbai">Mumbai</button>
+            <button type="button" class="region-chip" data-reg="Delhi NCR">Delhi</button>
+            <button type="button" class="region-chip" data-reg="Chennai">Chennai</button>
+            <button type="button" class="region-chip" data-reg="Hyderabad">Hyderabad</button>
+          </div>
+        </div>
+
+        <!-- Input 3: Number of Leads Required -->
+        <div class="form-group">
+          <div class="label-split">
+            <label for="inputLeadCount" class="form-label">
+              <i class="fa-solid fa-bullseye label-icon"></i> Number of Leads Target
+            </label>
+            <span class="slider-display-val" id="leadCountDisplay">25 leads</span>
+          </div>
+          <div class="slider-row">
+            <input 
+              type="range" 
+              id="inputLeadSlider" 
+              class="form-range" 
+              min="5" 
+              max="200" 
+              step="5" 
+              value="25" 
+            />
+          </div>
+          <div class="count-presets">
+            <button type="button" class="preset-btn" data-count="10">10</button>
+            <button type="button" class="preset-btn active" data-count="25">25</button>
+            <button type="button" class="preset-btn" data-count="50">50</button>
+            <button type="button" class="preset-btn" data-count="100">100</button>
+            <button type="button" class="preset-btn" data-count="200">200</button>
+          </div>
+        </div>
+
+        <!-- Input 4: Output File Format (Excel vs CSV) -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-file-export label-icon"></i> Output File Format
+          </label>
+          <div class="format-toggle-group">
+            <label class="format-option active" id="formatXlsxLabel">
+              <input type="radio" name="outputFormat" value="xlsx" checked />
+              <div class="format-card">
+                <i class="fa-regular fa-file-excel format-icon excel-icon"></i>
+                <div class="format-info">
+                  <span class="format-name">Microsoft Excel</span>
+                  <span class="format-ext">.xlsx (Formatted)</span>
+                </div>
+              </div>
+            </label>
+            <label class="format-option" id="formatCsvLabel">
+              <input type="radio" name="outputFormat" value="csv" />
+              <div class="format-card">
+                <i class="fa-solid fa-file-csv format-icon csv-icon"></i>
+                <div class="format-info">
+                  <span class="format-name">CSV Table</span>
+                  <span class="format-ext">.csv (Universal)</span>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Input 5: Output Directory -->
+        <div class="form-group">
+          <div class="label-split">
+            <label for="inputOutputDir" class="form-label">
+              <i class="fa-solid fa-folder-tree label-icon"></i> Output Location Directory
+            </label>
+            <button type="button" class="btn-text-link" id="resetDirBtn">Set Default</button>
+          </div>
+          <div class="input-wrapper dir-wrapper">
+            <input 
+              type="text" 
+              id="inputOutputDir" 
+              class="form-input dir-input" 
+              placeholder="e.g. C:\Leads\Exports" 
+              value="" 
+            />
+            <button type="button" class="dir-open-btn" id="openConfigDirBtn" title="Open this folder in File Explorer">
+              <i class="fa-regular fa-folder-open"></i>
+            </button>
+          </div>
+          <p class="field-help-text">Files will be auto-saved here with timestamped filenames upon extraction.</p>
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div class="form-actions">
+          <button type="button" class="btn-primary-glow" id="startScrapeBtn">
+            <i class="fa-solid fa-play"></i>
+            <span>Launch RION Engine</span>
+          </button>
+          <button type="button" class="btn-danger-outline" id="stopScrapeBtn" disabled>
+            <i class="fa-solid fa-stop"></i>
+            <span>Stop Engine</span>
+          </button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- RIGHT SECTION: DASHBOARD, STATS & LEADS DISPLAY -->
+    <section class="content-panel">
+
+      <!-- HERO METRICS ROW -->
+      <div class="metrics-grid">
+        <!-- Metric 1: Total Scraped -->
+        <div class="metric-card glass-card">
+          <div class="metric-top">
+            <span class="metric-label">Leads Extracted</span>
+            <div class="metric-icon-wrap icon-cyan">
+              <i class="fa-solid fa-building"></i>
+            </div>
+          </div>
+          <div class="metric-val-wrap">
+            <span class="metric-value" id="statTotalFound">0</span>
+            <span class="metric-sub" id="statTargetRatio">/ 0 goal</span>
+          </div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill fill-cyan" id="metricBarTotal" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 2: Verified Emails -->
+        <div class="metric-card glass-card">
+          <div class="metric-top">
+            <span class="metric-label">Emails Discovered</span>
+            <div class="metric-icon-wrap icon-purple">
+              <i class="fa-solid fa-envelope-open-text"></i>
+            </div>
+          </div>
+          <div class="metric-val-wrap">
+            <span class="metric-value" id="statEmailsFound">0</span>
+            <span class="metric-badge badge-purple" id="statEmailRate">0% rate</span>
+          </div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill fill-purple" id="metricBarEmails" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 3: Direct Phone Numbers -->
+        <div class="metric-card glass-card">
+          <div class="metric-top">
+            <span class="metric-label">Phones Found</span>
+            <div class="metric-icon-wrap icon-emerald">
+              <i class="fa-solid fa-phone-volume"></i>
+            </div>
+          </div>
+          <div class="metric-val-wrap">
+            <span class="metric-value" id="statPhonesFound">0</span>
+            <span class="metric-badge badge-emerald" id="statPhoneRate">0% rate</span>
+          </div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill fill-emerald" id="metricBarPhones" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Metric 4: Official Websites -->
+        <div class="metric-card glass-card">
+          <div class="metric-top">
+            <span class="metric-label">Websites Linked</span>
+            <div class="metric-icon-wrap icon-amber">
+              <i class="fa-solid fa-globe"></i>
+            </div>
+          </div>
+          <div class="metric-val-wrap">
+            <span class="metric-value" id="statWebsitesFound">0</span>
+            <span class="metric-sub">verified links</span>
+          </div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill fill-amber" id="metricBarWebsites" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVE PROGRESS BANNER -->
+      <div class="progress-banner glass-card" id="progressBanner">
+        <div class="progress-header">
+          <div class="progress-info-left">
+            <div class="spinner-pulse" id="scraperPulse"></div>
+            <div>
+              <h4 class="progress-title" id="progressTitle">Scraper Engine Standby</h4>
+              <p class="progress-subtitle" id="progressCurrentAction">Fill parameters on the left and click 'Launch RION Engine'.</p>
+            </div>
+          </div>
+          <div class="progress-percentage" id="progressPercentageText">0%</div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="mainProgressBar" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 1: MAIN LEADS TABLE VIEW -->
+      <div class="tab-pane active" id="tab-dashboard">
+        <div class="table-container-card glass-card">
+          
+          <!-- Table Toolbar -->
+          <div class="table-toolbar">
+            <div class="toolbar-left">
+              <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input 
+                  type="text" 
+                  id="tableSearchInput" 
+                  class="table-search" 
+                  placeholder="Filter leads by company, category, phone, email..." 
+                />
+              </div>
+              
+              <!-- Quick Filter Pills -->
+              <div class="filter-pills">
+                <button class="pill-btn active" data-filter="all">All (<span id="countAllFilter">0</span>)</button>
+                <button class="pill-btn" data-filter="email"><i class="fa-solid fa-at"></i> Has Email</button>
+                <button class="pill-btn" data-filter="phone"><i class="fa-solid fa-phone"></i> Has Phone</button>
+                <button class="pill-btn" data-filter="website"><i class="fa-solid fa-globe"></i> Has Website</button>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <button class="btn-action" id="btnCopyEmails" title="Copy all discovered email addresses to clipboard">
+                <i class="fa-regular fa-copy"></i> Copy Emails
+              </button>
+              <div class="dropdown-export">
+                <button class="btn-action btn-export" id="btnExportMenu">
+                  <i class="fa-solid fa-download"></i> Save / Export <i class="fa-solid fa-chevron-down caret"></i>
+                </button>
+                <div class="export-dropdown-content" id="exportDropdownMenu">
+                  <a href="#" id="exportExcelBtn"><i class="fa-regular fa-file-excel excel-color"></i> Download Excel (.xlsx)</a>
+                  <a href="#" id="exportCsvBtn"><i class="fa-solid fa-file-csv csv-color"></i> Download CSV (.csv)</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leads Data Table -->
+          <div class="table-scroll-wrapper">
+            <table class="leads-table" id="leadsTable">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Company Name</th>
+                  <th>Industry / Category</th>
+                  <th>Contact Info</th>
+                  <th>Website</th>
+                  <th>Location / Address</th>
+                  <th>Rating</th>
+                  <th style="width: 70px;">Link</th>
+                </tr>
+              </thead>
+              <tbody id="leadsTableBody">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyStateContainer">
+              <div class="empty-icon-wrap">
+                <i class="fa-solid fa-satellite-dish"></i>
+              </div>
+              <h3>No Leads Discovered Yet</h3>
+              <p>Configure your target keywords and region on the left, then click <strong>Launch RION Engine</strong> to begin extracting live leads from Google Maps.</p>
+            </div>
+          </div>
+
+          <!-- Table Footer Info -->
+          <div class="table-footer">
+            <span class="showing-count" id="tableShowingCount">Showing 0 of 0 leads</span>
+            <div class="quick-status-note">
+              <i class="fa-solid fa-shield-halved"></i> Data enriched in real-time with website email scraping.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: EXPORT ARCHIVE VIEW -->
+      <div class="tab-pane" id="tab-history">
+        <div class="archive-card glass-card">
+          <div class="archive-header">
+            <div>
+              <h3><i class="fa-solid fa-box-archive"></i> Generated Lead Files Archive</h3>
+              <p>All previously exported spreadsheets in your configured output directory.</p>
+            </div>
+            <div class="archive-actions">
+              <button class="btn-action" id="refreshArchiveBtn">
+                <i class="fa-solid fa-arrows-rotate"></i> Refresh
+              </button>
+              <button class="btn-action btn-highlight" id="openArchiveFolderBtn">
+                <i class="fa-solid fa-folder-open"></i> Open Export Folder
+              </button>
+            </div>
+          </div>
+
+          <div class="archive-table-wrap">
+            <table class="archive-table">
+              <thead>
+                <tr>
+                  <th>Filename</th>
+                  <th>Format</th>
+                  <th>File Size</th>
+                  <th>Created Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="archiveTableBody">
+                <!-- Populated via API -->
+              </tbody>
+            </table>
+            <div class="empty-archive" id="emptyArchiveMessage" style="display: none;">
+              <i class="fa-regular fa-folder-open"></i>
+              <p>No export files found in directory yet. Run your first scrape to generate spreadsheets.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: LIVE TERMINAL CONSOLE -->
+      <div class="tab-pane" id="tab-terminal">
+        <div class="terminal-card glass-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+              <span class="terminal-title">RION Engine Live Activity Stream</span>
+            </div>
+            <div class="terminal-actions">
+              <label class="terminal-autoscroll">
+                <input type="checkbox" id="autoscrollCheck" checked /> Auto-scroll
+              </label>
+              <button class="terminal-clear-btn" id="clearTerminalBtn">
+                <i class="fa-solid fa-trash-can"></i> Clear
+              </button>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminalLogsContainer">
+            <div class="log-line log-system">
+              <span class="log-ts">[00:00:00]</span>
+              <span class="log-tag tag-sys">SYSTEM</span>
+              <span class="log-msg">RION LEADS generation tool initialized. Ready to launch.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Lead Detail Modal -->
+  <div class="modal-overlay" id="leadModalOverlay">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3 id="modalCompanyName">Company Name</h3>
+        <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBodyContent">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
