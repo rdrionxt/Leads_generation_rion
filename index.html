@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body class="dark-theme">
   <!-- Background Ambient Glows -->
@@ -44,6 +44,9 @@
         <span class="status-indicator-dot" id="statusDot"></span>
         <span class="status-indicator-text" id="statusText">System Ready</span>
       </div>
+      <button class="backend-pill-btn" id="btnServerConfig" title="Configure Backend Engine Endpoint">
+        <i class="fa-solid fa-server"></i> <span id="serverUrlLabel">Backend: Local</span>
+      </button>
     </div>
 
     <div class="header-right">
@@ -495,7 +498,40 @@
     </div>
   </div>
 
+  <!-- Backend Configuration Modal -->
+  <div class="modal-overlay" id="serverModalOverlay">
+    <div class="modal-card glass-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 style="display:flex;align-items:center;gap:10px;"><i class="fa-solid fa-server" style="color:var(--primary-cyan);"></i> Backend Engine Connection</h3>
+        <button class="modal-close-btn" id="serverModalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <p style="font-size:0.86rem;color:var(--text-muted);line-height:1.6;margin:0;">
+          When hosted on GitHub Pages or custom domains, this dashboard communicates with your scraper engine via REST and WebSockets.
+        </p>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:600;">Engine API Endpoint URL</label>
+          <input type="text" id="inputBackendUrl" class="form-input" placeholder="http://localhost:8000" style="font-family:var(--font-mono);font-size:0.88rem;width:100%;box-sizing:border-box;" />
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="preset-btn" id="btnPresetLocal" style="flex:1;padding:8px;font-size:0.8rem;">
+            <i class="fa-solid fa-laptop"></i> Local Engine (8000)
+          </button>
+          <button type="button" class="preset-btn" id="btnPresetCurrent" style="flex:1;padding:8px;font-size:0.8rem;">
+            <i class="fa-solid fa-network-wired"></i> Same Host Origin
+          </button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+          <button type="button" class="btn-secondary" id="serverModalCancelBtn">Cancel</button>
+          <button type="button" class="btn-primary-glow" id="btnSaveBackendUrl" style="padding:8px 22px;">
+            <i class="fa-solid fa-plug"></i> Connect Engine
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
-  <script src="/static/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
