@@ -11,11 +11,31 @@ const state = {
   activeFilter: 'all',
   searchQuery: '',
   isRunning: false,
+  isStartingNewScrape: false,
   targetCount: 25,
   defaultDir: '',
   ws: null,
   reconnectAttempts: 0
 };
+
+function saveLeadsToStorage(leads) {
+  try {
+    if (Array.isArray(leads) && leads.length > 0) {
+      localStorage.setItem('rion_saved_leads', JSON.stringify(leads));
+    }
+  } catch (e) {}
+}
+
+function loadLeadsFromStorage() {
+  try {
+    const raw = localStorage.getItem('rion_saved_leads');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return null;
+}
 
 // DOM Elements
 const elements = {
@@ -232,17 +252,33 @@ document.addEventListener('DOMContentLoaded', () => {
   // If on GitHub Pages or demo, load sample preview leads if backend not connected yet
   setTimeout(() => {
     if (state.leads.length === 0) {
-      state.leads = [...DEMO_LEADS];
-      renderLeads();
-      updateStatsUI({
-        total_found: DEMO_LEADS.length,
-        emails_found: DEMO_LEADS.filter(l => l.email).length,
-        phones_found: DEMO_LEADS.filter(l => l.phone).length,
-        websites_found: DEMO_LEADS.filter(l => l.website).length,
-        status: 'idle',
-        progress_percent: 100,
-        current_action: 'Demo Preview Loaded'
-      });
+      const cached = loadLeadsFromStorage();
+      if (cached && cached.length > 0) {
+        state.leads = cached;
+        renderLeads();
+        updateStatsUI({
+          total_found: cached.length,
+          emails_found: cached.filter(l => l.email).length,
+          phones_found: cached.filter(l => l.phone).length,
+          websites_found: cached.filter(l => l.website).length,
+          status: 'idle',
+          progress_percent: 100,
+          current_action: `Restored ${cached.length} saved leads from storage`
+        });
+        showToast(`Restored ${cached.length} saved leads from local cache.`, 'info');
+      } else {
+        state.leads = [...DEMO_LEADS];
+        renderLeads();
+        updateStatsUI({
+          total_found: DEMO_LEADS.length,
+          emails_found: DEMO_LEADS.filter(l => l.email).length,
+          phones_found: DEMO_LEADS.filter(l => l.phone).length,
+          websites_found: DEMO_LEADS.filter(l => l.website).length,
+          status: 'idle',
+          progress_percent: 100,
+          current_action: 'Demo Preview Loaded'
+        });
+      }
     }
   }, 1200);
 });
@@ -369,8 +405,14 @@ function initWebSocket() {
             if (lRes.ok) {
               const lData = await lRes.json();
               if (lData.leads) {
-                state.leads = lData.leads;
-                renderLeads();
+                // PROTECTION: If backend returned 0 but frontend has leads, do NOT wipe unless starting fresh run
+                if (lData.leads.length === 0 && state.leads.length > 0 && !state.isStartingNewScrape) {
+                  console.warn(`[RION Sync] Backend lead count is 0, but frontend has ${state.leads.length} leads. Preserving frontend data.`);
+                } else if (lData.leads.length > 0 || state.isStartingNewScrape) {
+                  state.leads = lData.leads;
+                  saveLeadsToStorage(state.leads);
+                  renderLeads();
+                }
               }
             }
           }
@@ -394,7 +436,15 @@ function handleWsMessage(msg) {
     }
     if (msg.leads && msg.leads.length > 0) {
       state.leads = msg.leads;
+      saveLeadsToStorage(state.leads);
       renderLeads();
+    } else {
+      // Check if we can restore cached leads from browser storage
+      const cached = loadLeadsFromStorage();
+      if (cached && cached.length > 0 && state.leads.length === 0) {
+        state.leads = cached;
+        renderLeads();
+      }
     }
     if (msg.logs && msg.logs.length > 0) {
       msg.logs.forEach(log => appendLogLine(log.timestamp, log.level, log.message));
@@ -406,6 +456,7 @@ function handleWsMessage(msg) {
   else if (type === 'lead_found') {
     if (data.lead) {
       state.leads.push(data.lead);
+      saveLeadsToStorage(state.leads);
       renderLeads();
       animateStatTick(elements.statTotalFound, state.leads.length);
     }
@@ -422,8 +473,11 @@ function handleWsMessage(msg) {
   }
   else if (type === 'completed') {
     setRunningState(false);
+    state.isStartingNewScrape = false;
+    saveLeadsToStorage(state.leads);
     if (stats) updateStatsUI(stats);
-    showToast(`🎉 Extraction completed! Found ${data.total_leads} leads. Saved to: ${data.file_name}`, 'success');
+    const fileName = data.file_name || 'autosave_leads.csv';
+    showToast(`🎉 Extraction completed! Found ${state.leads.length} leads. Saved to: ${fileName}`, 'success');
     fetchArchiveFiles();
   }
 }
@@ -632,8 +686,10 @@ async function handleStartScraper() {
     return;
   }
 
-  // Clear current leads for new run
+  // Clear current leads for explicit new run
+  state.isStartingNewScrape = true;
   state.leads = [];
+  try { localStorage.removeItem('rion_saved_leads'); } catch (e) {}
   renderLeads();
 
   setRunningState(true);
@@ -700,6 +756,9 @@ async function handleStopScraper() {
 
 function setRunningState(running) {
   state.isRunning = running;
+  if (!running) {
+    state.isStartingNewScrape = false;
+  }
   elements.startScrapeBtn.disabled = running;
   elements.stopScrapeBtn.disabled = !running;
 

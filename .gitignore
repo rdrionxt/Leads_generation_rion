@@ -32,3 +32,8 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db
+
+# User exports
+exports/*.xlsx
+exports/*.csv
+exports/*.json

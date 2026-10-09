@@ -53,6 +53,25 @@ current_session_data: Dict[str, Any] = {
 EXPORTS_DEFAULT_DIR = os.path.abspath("./exports")
 os.makedirs(EXPORTS_DEFAULT_DIR, exist_ok=True)
 
+# Restore auto-saved session data on startup if present
+autosave_file = os.path.join(EXPORTS_DEFAULT_DIR, "autosave_leads.json")
+if os.path.exists(autosave_file):
+    try:
+        with open(autosave_file, "r", encoding="utf-8") as f:
+            saved_leads = json.load(f)
+            if isinstance(saved_leads, list) and saved_leads:
+                current_session_data["leads"] = saved_leads
+                current_session_data["stats"]["total_found"] = len(saved_leads)
+                current_session_data["stats"]["emails_found"] = len([l for l in saved_leads if l.get("email")])
+                current_session_data["stats"]["phones_found"] = len([l for l in saved_leads if l.get("phone")])
+                current_session_data["stats"]["websites_found"] = len([l for l in saved_leads if l.get("website")])
+                current_session_data["stats"]["status"] = "idle"
+                current_session_data["stats"]["progress_percent"] = 100
+                current_session_data["stats"]["current_action"] = f"Restored {len(saved_leads)} leads from previous autosave"
+                print(f"[*] Restored {len(saved_leads)} leads from autosave_leads.json")
+    except Exception as e:
+        print(f"[Autosave Restore Error] {e}")
+
 
 class ScrapeRequest(BaseModel):
     keywords: str
