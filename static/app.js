@@ -117,9 +117,9 @@ const elements = {
 let API_BASE = (function() {
   const saved = localStorage.getItem('rion_backend_url');
   if (saved !== null) return saved.trim().replace(/\/$/, '');
-  // Default to active HTTPS cloud tunnel if hosted on GitHub Pages
+  // Default to active Render cloud backend if hosted on GitHub Pages
   if (window.location.hostname.includes('github.io')) {
-    return 'https://revenue-attention-council-baltimore.trycloudflare.com';
+    return 'https://rion-leads.onrender.com';
   }
   if (window.location.protocol === 'file:') {
     return 'http://localhost:8000';

@@ -280,7 +280,7 @@ class LeadScraper:
                 try:
                     browser: Browser = await p.chromium.launch(
                         headless=True,
-                        args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"]
+                        args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-blink-features=AutomationControlled"]
                     )
                     context: BrowserContext = await browser.new_context(
                         user_agent=client_headers["User-Agent"],
