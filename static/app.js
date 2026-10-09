@@ -117,8 +117,11 @@ const elements = {
 let API_BASE = (function() {
   const saved = localStorage.getItem('rion_backend_url');
   if (saved !== null) return saved.trim().replace(/\/$/, '');
-  // Default to localhost if hosted on GitHub Pages or file:
-  if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+  // Default to active HTTPS cloud tunnel if hosted on GitHub Pages
+  if (window.location.hostname.includes('github.io')) {
+    return 'https://revenue-attention-council-baltimore.trycloudflare.com';
+  }
+  if (window.location.protocol === 'file:') {
     return 'http://localhost:8000';
   }
   return '';
@@ -648,13 +651,26 @@ async function handleStartScraper() {
       })
     });
 
-    const data = await res.json();
     if (!res.ok) {
-      showToast(data.detail || 'Failed to start engine.', 'error');
+      if (res.status === 405 || res.status === 404) {
+        showToast('⚠️ Static GitHub Pages cannot run scraping directly (HTTP 405). Please connect your Cloud backend URL (Render/Cloudflare) or open the cloud deployment.', 'error');
+        if (elements.serverModalOverlay) {
+          setTimeout(() => elements.serverModalOverlay.classList.add('show'), 600);
+        }
+        setRunningState(false);
+        return;
+      }
+      let errDetail = 'Failed to start engine.';
+      try {
+        const data = await res.json();
+        errDetail = data.detail || errDetail;
+      } catch (e) {}
+      showToast(errDetail, 'error');
       setRunningState(false);
       return;
     }
 
+    const data = await res.json();
     showToast(`🚀 RION Engine launched! Searching for '${keywords}' in '${region}'...`, 'success');
   } catch (err) {
     console.error('[RION Error]', err);
